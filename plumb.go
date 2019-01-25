@@ -98,7 +98,14 @@ func contentTypeUrl(arg string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return http.DetectContentType(buf[:n]), nil
+	mediaType := http.DetectContentType(buf[:n])
+	if (mediaType == "application/octet-stream" || mediaType == "" ) {
+		mediaType := r.Header.Get("Content-type")
+		if mediaType == "" {
+			return "text", nil
+		}
+	}
+	return mediaType, nil
 }
 
 func contentTypeFile(arg string) (string, error) {
@@ -112,7 +119,11 @@ func contentTypeFile(arg string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return http.DetectContentType(buf[:n]), nil
+	mediaType := http.DetectContentType(buf[:n])
+	if mediaType == "application/octet-stream" {
+		return "text", nil
+	}
+	return mediaType, nil
 }
 
 func content(arg string) (string, error) {
