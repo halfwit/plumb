@@ -9,7 +9,7 @@ plumb is a drop-in replacement for plan9's plumb command, that understands mime-
 plumb will write plumb messages as the usual `type is text` for non-files, and non-URLs. When the content is one of those, however, it will set the type to that mime.
 
 ```
-
+# Examples of types sent to plumber by this implementation of plumb
 type is image/png
 type is text/html
 type is text/plain
