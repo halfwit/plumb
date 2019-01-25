@@ -14,7 +14,6 @@ type is image/png
 type is text/html
 type is text/plain
 type is application/pdf
-
 ```
 
 In practice, setting a rule for most common mimetypes will serve you well. For example, my last implementation of plumber used a relatively small amount of mimes, after a few years' worth of plumbing in this manner. 
