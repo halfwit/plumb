@@ -24,4 +24,5 @@ See https://github.com/halfwit/Plumber/tree/master/cfg/plumber
 If the remote mimetype is `application/octet-stream`, which is a fallback when it cannot infer the mimetype this client will attempt to find a content-type field in any remote URL, finally setting the type to `text`.
 
 Reference for mimetype: https://mimesniff.spec.whatwg.org/
+
 Reasonably robust list of mimetypes: https://www.freeformatter.com/mime-types-list.html
