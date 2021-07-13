@@ -40,7 +40,6 @@ func (s storeMsg) send() error {
 	if err != nil {
 		return err
 	}
-log.Println(s)
 	message := &plumb.Message{
 		Src: s.src,
 		Dst: s.dst,
@@ -52,15 +51,15 @@ log.Println(s)
 	return message.Send(fd)
 }
 
-func newStoreMsg(mediaType, wdir, arg string, attr *plumb.Attribute) *storeMsg {
+func newStoreMsg(mediaType, wdir, data string, attr *plumb.Attribute) *storeMsg {
 	sf := &storeMsg{
 		src: os.Args[0],
 		dst: "",
 		wdir: wdir,
 		msgtype: mediaType,
 		attr: attr,
-		ndata: len(arg),
-		data: arg,
+		ndata: len(data),
+		data: data,
 	}
 	if *source != "" {
 		sf.src = *source
@@ -88,10 +87,10 @@ func paramsToAttr(params map[string]string) *plumb.Attribute {
 	return attr
 }
 
-func contentTypeUrl(arg string) (string, error) {
+func contentTypeUrl(data string) (string, error) {
 	// We read in 512 bytes 
 	buf := make([]byte, 512)
-	u, err := url.ParseRequestURI(arg)
+	u, err := url.ParseRequestURI(data)
 	if err != nil {
 		return "text", nil
 	}
@@ -111,12 +110,13 @@ func contentTypeUrl(arg string) (string, error) {
 			return "text", nil
 		}
 	}
+
 	return mediaType, nil
 }
 
-func contentTypeFile(arg string) (string, error) {
+func contentTypeFile(data string) (string, error) {
 	buf := make([]byte, 512)
-	fd, err := os.Open(arg)
+	fd, err := os.Open(data)
 	if err != nil {
 		return "", err
 	}
@@ -132,15 +132,15 @@ func contentTypeFile(arg string) (string, error) {
 	return mediaType, nil
 }
 
-func content(arg string) (string, error) {
+func content(data string) (string, error) {
         if *typefield != "" {
             return *typefield, nil
         }
  
-	if _, err := os.Stat(arg); os.IsNotExist(err)  {
-		return contentTypeUrl(arg)
+	if _, err := os.Stat(data); os.IsNotExist(err)  {
+		return contentTypeUrl(data)
 	}
-	return contentTypeFile(arg)
+	return contentTypeFile(data)
 }
 
 func getMediaType(ct string) (string, *plumb.Attribute) {
@@ -154,8 +154,21 @@ func getMediaType(ct string) (string, *plumb.Attribute) {
 		return mediaType, paramsToAttr(params)
 }
 
-func main() {
+func readInput() string {
         data := new(strings.Builder)
+        if *input {
+		// readInput on stdin will come with a fancy newline
+		// return a slice without the last character 
+		io.Copy(data, os.Stdin)
+		return data.String()[:data.Len()-1]
+        } else {
+		data.WriteString(flag.Arg(0))
+        }
+
+	return data.String()
+}
+
+func main() {
 
 	flag.Parse()
 	if flag.Lookup("h") != nil {
@@ -167,18 +180,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-        if *input {
-		io.Copy(data, os.Stdin)
-        } else {
-		data.WriteString(flag.Arg(0))
-        }
-
-	ct, err := content(data.String())
+        data := readInput()
+	ct, err := content(data)
 	if err != nil {
 		log.Fatal(err)
 	}
 	mediaType, params := getMediaType(ct)
-	storeMsg := newStoreMsg(mediaType, wdir, data.String(), params)
+	storeMsg := newStoreMsg(mediaType, wdir, data, params)
 	err = storeMsg.send()
 	if err != nil {
 		log.Fatal(err)
