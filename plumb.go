@@ -10,10 +10,11 @@ import (
 	"strings"
 
 	"9fans.net/go/plumb"
+        "9fans.net/go/plan9"
 )
 
 var (
-	plumbfile = flag.String("p", "/mnt/plumb/send", "write the message to plumbfile (default /mnt/plumb/send)")
+	plumbfile = flag.String("p", "send", "write the message to plumbfile (default send)")
 	attributes = flag.String("a", "", "set the attr field of the message (default is empty), expects key=value")
 	source = flag.String("s", "", "set the src field of the message (default is store)")
 	destination = flag.String("d", "", "set the dst filed of the message (default is store)")
@@ -31,7 +32,7 @@ type storeMsg struct {
 }
 
 func (s storeMsg) send() error {
-	fd, err := os.OpenFile(*plumbfile, os.O_WRONLY, 0644)
+	fd, err := plumb.Open("send", plan9.OWRITE)
 	if err != nil {
 		return err
 	}
