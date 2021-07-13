@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io"
 	"log"
 	"mime"
 	"net/http"
@@ -18,7 +19,9 @@ var (
 	attributes = flag.String("a", "", "set the attr field of the message (default is empty), expects key=value")
 	source = flag.String("s", "", "set the src field of the message (default is store)")
 	destination = flag.String("d", "", "set the dst filed of the message (default is store)")
+        typefield = flag.String("t", "", "override the type message sent to the plumber")
 	directory = flag.String("w", "", "set the wdir field of the message (default is current directory)")
+        input = flag.Bool("i", false, "take the data from standard input rather than the argument strings")
 )
 
 type storeMsg struct {
@@ -36,6 +39,7 @@ func (s storeMsg) send() error {
 	if err != nil {
 		return err
 	}
+log.Println(s)
 	message := &plumb.Message{
 		Src: s.src,
 		Dst: s.dst,
@@ -128,6 +132,10 @@ func contentTypeFile(arg string) (string, error) {
 }
 
 func content(arg string) (string, error) {
+        if *typefield != "" {
+            return *typefield, nil
+        }
+ 
 	if _, err := os.Stat(arg); os.IsNotExist(err)  {
 		return contentTypeUrl(arg)
 	}
@@ -146,6 +154,8 @@ func getMediaType(ct string) (string, *plumb.Attribute) {
 }
 
 func main() {
+        data := new(strings.Builder)
+
 	flag.Parse()
 	if flag.Lookup("h") != nil {
 		flag.Usage()
@@ -155,16 +165,21 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	for _, arg := range os.Args[1:] {
-		ct, err := content(arg)
-		if err != nil {
-			log.Fatal(err)
-		}
-		mediaType, params := getMediaType(ct)
-		storeMsg := newStoreMsg(mediaType, wdir, arg, params)
-		err = storeMsg.send()
-		if err != nil {
-			log.Fatal(err)
-		}
+
+        if *input {
+		io.Copy(data, os.Stdin)
+        } else {
+		data.WriteString(flag.Arg(0))
+        }
+
+	ct, err := content(data.String())
+	if err != nil {
+		log.Fatal(err)
+	}
+	mediaType, params := getMediaType(ct)
+	storeMsg := newStoreMsg(mediaType, wdir, data.String(), params)
+	err = storeMsg.send()
+	if err != nil {
+		log.Fatal(err)
 	}
 }
