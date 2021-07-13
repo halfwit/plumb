@@ -35,7 +35,8 @@ type storeMsg struct {
 }
 
 func (s storeMsg) send() error {
-	fd, err := plumb.Open("send", plan9.OWRITE)
+        // Switch on GOOS here eventually 
+	fd, err := plumb.Open(*plumbfile, plan9.OWRITE)
 	if err != nil {
 		return err
 	}
