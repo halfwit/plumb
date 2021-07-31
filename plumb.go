@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"runtime"
 	"strings"
 
 	"9fans.net/go/plumb"
@@ -35,8 +36,15 @@ type storeMsg struct {
 }
 
 func (s storeMsg) send() error {
-        // Switch on GOOS here eventually 
-	fd, err := plumb.Open(*plumbfile, plan9.OWRITE)
+        var fd io.Writer
+	var err error
+	
+	switch runtime.GOOS {
+	case "plan9":
+		fd, err = os.OpenFile("/mnt/plumb/send", os.O_WRONLY, 0644)
+	default:
+		fd, err = plumb.Open(*plumbfile, plan9.OWRITE)
+	}
 	if err != nil {
 		return err
 	}
