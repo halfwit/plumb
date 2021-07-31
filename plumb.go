@@ -36,7 +36,7 @@ type storeMsg struct {
 }
 
 func (s storeMsg) send() error {
-        var fd io.Writer
+	var fd io.Writer
 	var err error
 	
 	switch runtime.GOOS {
